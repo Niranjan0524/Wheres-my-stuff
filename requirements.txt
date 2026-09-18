@@ -1,0 +1,9 @@
+ultralytics
+opencv-python
+streamlit
+fastapi
+uvicorn
+sqlalchemy
+python-multipart
+google-genai
+requests
