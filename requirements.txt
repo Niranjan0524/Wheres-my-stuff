@@ -7,3 +7,5 @@ sqlalchemy
 python-multipart
 google-genai
 requests
+Pillow
+pandas

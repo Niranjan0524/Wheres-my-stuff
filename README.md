@@ -1,50 +1,78 @@
-# Where Is My Stuff? - Task 4 Part 1
+# Where Is My Stuff? — Task 5 (50% Milestone)
 
-This is the prototype for the core pipeline of "Where Is My Stuff?"
+A Computer Vision-based tracking and observation system designed to answer: *"Where did I last leave this object?"*
 
-## Architecture
-1. **Pipeline**: YOLOv8 (Detection) -> ByteTrack (Tracking) -> Quadrant Heuristic (Zone Classification) -> SQLite (Storage).
-2. **Backend API**: FastAPI endpoint that acts as a wrapper for a Vision LLM (Google Gemini by default).
-3. **Frontend UI**: Streamlit application to upload videos, run the pipeline, view annotated results, browse stored observations, and query the Vision LLM for specific frames.
+This repository contains the prototype implementation for **CSE411 Computer Vision Project — Task 5 (Implementation Part 2)** by **Team 13**:
+- Saksham Saklani (2023BCD0049)
+- Niranjan Alase (2023BCD0055)
+- Abhinav Marlingaplar (2023BCD0013)
+- Kedar Vaishnav (2023BCS0162)
+
+---
+
+## Architecture Overview
+
+1. **Detection & Tracking**: YOLOv8 Nano (`yolov8n.pt`) paired with ByteTrack (`bytetrack.yaml`) for fast, CPU-friendly multi-object detection and tracking.
+2. **Visual Re-Identification (`reid.py`)**: `GlobalTracker` using 48-bin normalized HSV color histograms and aspect ratio matching to preserve identity across occlusions and track re-entries.
+3. **Dynamic Zone Classification (`zones.py`)**: `ZoneManager` utilizing OpenCV's Point-in-Polygon algorithm (`cv2.pointPolygonTest`) to evaluate arbitrary polygonal spatial zones persisted in JSON.
+4. **Natural Language Query Engine (`query_engine.py`)**: Parses natural questions (*"Where is my laptop?"*, *"Where did I leave my bottle?"*), resolves object classes via aliases and fuzzy matching, and retrieves latest locations with movement history.
+5. **Persistent Observation Storage (`db.py`)**: SQLite database (`observations.db`) logging timestamps, frame numbers, classes, ByteTrack IDs, global track IDs, confidence, zones, crop paths, and keyframe paths.
+6. **Backend REST API (`api.py`)**: FastAPI service hosting endpoints for Vision LLM scene analysis (Google Gemini 2.5 Flash), natural language queries, zone management, and observation summaries.
+7. **Frontend Dashboard (`app.py`)**: Multi-tab Streamlit dashboard providing video upload, live processing, interactive zone previews, natural language search with visual evidence cards, movement history timelines, and AI scene analysis.
+
+---
 
 ## Setup Instructions
 
-1. **Install Dependencies**
-   ```powershell
-   pip install -r requirements.txt
-   ```
+### 1. Install Dependencies
+```powershell
+pip install -r requirements.txt
+```
 
-2. **Set Environment Variable (Optional but recommended for AI features)**
-   Set your Google Gemini API key (or generic API key if you modify `api.py`).
-   ```powershell
-   $env:LLM_API_KEY="your_api_key_here"
-   ```
-   *Note: If you don't set this, the AI analysis will just return a mock response for testing.*
+### 2. Configure Environment Variable (Optional for AI Scene Analysis)
+To enable Google Gemini 2.5 Flash scene analysis:
+```powershell
+$env:LLM_API_KEY="your_google_gemini_api_key"
+```
+*(If omitted, the AI analysis endpoint returns a mock response for testing).*
 
-3. **Run the Backend API**
-   Open a terminal and start the FastAPI server:
-   ```powershell
-   python api.py
-   ```
-   The API will run on `http://localhost:8000`.
+### 3. Run Backend API
+```powershell
+python api.py
+```
+The API server runs on `http://localhost:8000`.
 
-4. **Run the Streamlit UI**
-   Open a **second** terminal and start the UI:
-   ```powershell
-   streamlit run app.py
-   ```
+### 4. Run Streamlit Dashboard
+Open a second terminal:
+```powershell
+streamlit run app.py
+```
+The dashboard will open in your browser at `http://localhost:8501`.
 
-## Usage
+---
 
-1. Open the Streamlit UI in your browser (usually `http://localhost:8501`).
-2. Upload a sample room video (any `.mp4` video with objects will work).
-3. Click **Start Processing**.
-4. The pipeline will process the video, draw bounding boxes with tracking IDs and zones, and save everything to `observations.db`.
-5. Once complete, you can:
-   - Play or download the annotated video.
-   - View the database of observations.
-   - Select an extracted frame from the dropdown and click **Analyze with AI** to send it to the Vision LLM.
+## Dashboard Features
 
-## Notes
-- Zones are currently statically defined by screen quadrants (Top-Left=Desk, Bottom-Left=Floor, Top-Right=Bed, Bottom-Right=Sofa).
-- A YOLOv8 Nano model (`yolov8n.pt`) is used by default for fast CPU inference.
+- **Tab 1: Video Processing & Zones**: Upload room videos (`.mp4`, `.avi`, `.mov`), preview zone configurations, run the tracking pipeline with live progress, download annotated videos with translucent zone overlays, and browse SQLite records.
+- **Tab 2: Where Is My Stuff?**: Natural language search bar with example chips (*"Where is my laptop?"*, *"Where did I leave the bottle?"*, *"What objects do you see?"*). Displays last-seen zone, timestamp, confidence, movement timeline, and side-by-side cropped object preview + full frame.
+- **Tab 3: Object Movement History**: Metric cards showing last-seen zones and total detections per object class, along with chronological zone transition histories and snapshot images.
+- **Tab 4: AI Scene Analysis**: Select keyframes extracted from the video and query Google Gemini 2.5 Flash for detailed semantic scene descriptions.
+
+---
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/analyze-image` | POST | Send a frame image to the Vision LLM (Gemini 2.5 Flash) |
+| `/query` | POST | Natural-language query against the observation database |
+| `/zones` | GET | Retrieve current polygonal zone configuration |
+| `/zones` | POST | Update and persist polygonal zone configuration |
+| `/classes` | GET | List all distinct object classes tracked in session |
+| `/summary` | GET | Aggregated observation summary per object class |
+
+---
+
+## Reports
+- **Task 4 Report (25% Milestone):** [`project_report.md`](project_report.md)
+- **Task 5 Report (50% Milestone):** [`report5.md`](report5.md)
