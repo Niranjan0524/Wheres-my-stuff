@@ -6,7 +6,7 @@ This repository contains the prototype implementation for **CSE411 Computer Visi
 - Saksham Saklani (2023BCD0049)
 - Niranjan Alase (2023BCD0055)
 - Abhinav Marlingaplar (2023BCD0013)
-- Kedar Vaishnav (2023BCS0162)
+- Kedar Vaishnav (2023BCS0163)
 
 ---
 
