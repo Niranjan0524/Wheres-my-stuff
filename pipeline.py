@@ -7,6 +7,7 @@ Task 5 upgrades:
   • Object crop extraction (for UI thumbnails and ReID gallery)
   • Zone overlay drawing on annotated output video
   • Extended DB logging (global_track_id, crop_path, frame_path)
+  • FAISS index of keyframe crop embeddings (memory.py)
 """
 
 import cv2
@@ -17,6 +18,7 @@ import json
 from db import init_db, reset_db, insert_observation
 from zones import ZoneManager
 from reid import GlobalTracker
+from memory import ObservationMemory
 
 
 def process_video(video_path, output_video_path="output.mp4",
@@ -44,8 +46,10 @@ def process_video(video_path, output_video_path="output.mp4",
     -------
     str : path to the output video
     """
-    # Reset DB for a fresh run
+    # Reset DB and the visual-memory index for a fresh run
     reset_db()
+    memory = ObservationMemory()
+    memory.reset()
 
     # Initialise YOLO model (nano for CPU speed)
     model = YOLO("yolov8n.pt")
@@ -156,6 +160,20 @@ def process_video(video_path, output_video_path="output.mp4",
                     frame_path=frame_path,
                 )
 
+                # Index the keyframe crop so text queries can search it later
+                embedding = global_tracker.embedding_for(global_id)
+                if crop_path and embedding is not None:
+                    memory.add(embedding, {
+                        "object_class": class_name,
+                        "zone": zone,
+                        "timestamp": timestamp,
+                        "frame_number": frame_number,
+                        "global_track_id": global_id,
+                        "crop_path": crop_path,
+                        "frame_path": frame_path,
+                        "confidence": float(conf),
+                    })
+
                 # ── Draw on frame ────────────────────────────────────────
                 label = (f"{class_name} | GID:{global_id} "
                          f"| {conf:.2f} | {zone}")
@@ -182,6 +200,7 @@ def process_video(video_path, output_video_path="output.mp4",
 
     cap.release()
     out.release()
+    memory.save()
     return output_video_path
 
 

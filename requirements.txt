@@ -11,3 +11,4 @@ requests
 Pillow
 pandas
 open-clip-torch
+faiss-cpu

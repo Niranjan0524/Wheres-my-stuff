@@ -330,6 +330,11 @@ with tab2:
             st.warning("No match found.")
 
         st.markdown(result["answer"])
+        if result.get("retrieval") == "faiss":
+            st.caption(
+                "Answered from the visual memory index "
+                f"(similarity {result.get('score', 0):.0%})."
+            )
 
         # Show evidence images if available
         latest = result.get("latest")

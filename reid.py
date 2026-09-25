@@ -77,10 +77,12 @@ class ClipEmbedder:
             self.model = model
             self.preprocess = preprocess
             self._torch = torch
+            self._tokenizer = open_clip.get_tokenizer(CLIP_MODEL_NAME)
             self.available = True
         except Exception as exc:
             self.available = False
             self.error = str(exc)
+            self._tokenizer = None
 
     def embed(
         self,
@@ -104,6 +106,31 @@ class ClipEmbedder:
             return feat.squeeze(0).cpu().numpy().astype(np.float32)
         except Exception:
             return None
+
+    def embed_text(self, text: str) -> Optional[np.ndarray]:
+        """L2-normalised CLIP text embedding, or None if the model is unavailable."""
+        if not self.available or self._tokenizer is None:
+            return None
+        try:
+            tokens = self._tokenizer([text])
+            torch = self._torch
+            with torch.no_grad():
+                feat = self.model.encode_text(tokens)
+                feat = feat / feat.norm(dim=-1, keepdim=True)
+            return feat.squeeze(0).cpu().numpy().astype(np.float32)
+        except Exception:
+            return None
+
+
+_SHARED_EMBEDDER: Optional[ClipEmbedder] = None
+
+
+def get_clip_embedder() -> ClipEmbedder:
+    """One CLIP encoder per process, shared by tracking and text search."""
+    global _SHARED_EMBEDDER
+    if _SHARED_EMBEDDER is None:
+        _SHARED_EMBEDDER = ClipEmbedder()
+    return _SHARED_EMBEDDER
 
 
 @dataclass
@@ -133,7 +160,7 @@ class GlobalTracker:
             is used as the encoder (for tests).
         """
         if embedder == "auto":
-            self.embedder = ClipEmbedder()
+            self.embedder = get_clip_embedder()
         else:
             self.embedder = embedder
         self.backend = (
@@ -191,6 +218,13 @@ class GlobalTracker:
         descriptor.global_track_id = gid
         self._gallery[gid] = descriptor
         return gid
+
+    def embedding_for(self, global_track_id: int) -> Optional[np.ndarray]:
+        """Latest CLIP embedding stored for this global id, if any."""
+        desc = self._gallery.get(global_track_id)
+        if desc is None:
+            return None
+        return desc.embedding
 
     def end_of_frame(self, current_byte_ids: set[int], frame_number: int):
         """
