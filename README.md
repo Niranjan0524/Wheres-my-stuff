@@ -53,7 +53,7 @@ The dashboard will open in your browser at `http://localhost:8501`.
 
 ## Dashboard Features
 
-- **Tab 1: Video Processing & Zones**: Upload room videos (`.mp4`, `.avi`, `.mov`), preview zone configurations, run the tracking pipeline with live progress, download annotated videos with translucent zone overlays, and browse SQLite records.
+- **Tab 1: Video Processing & Zones**: Upload room videos (`.mp4`, `.avi`, `.mov`), draw polygonal zones on the first frame, run the tracking pipeline with live progress, download annotated videos with translucent zone overlays, and browse SQLite records.
 - **Tab 2: Where Is My Stuff?**: Natural language search bar with example chips (*"Where is my laptop?"*, *"Where did I leave the bottle?"*, *"What objects do you see?"*). Displays last-seen zone, timestamp, confidence, movement timeline, and side-by-side cropped object preview + full frame.
 - **Tab 3: Object Movement History**: Metric cards showing last-seen zones and total detections per object class, along with chronological zone transition histories and snapshot images.
 - **Tab 4: AI Scene Analysis**: Select keyframes extracted from the video and query Google Gemini 2.5 Flash for detailed semantic scene descriptions.

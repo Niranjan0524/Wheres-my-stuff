@@ -1,6 +1,7 @@
 ultralytics
 opencv-python
-streamlit
+streamlit>=1.49
+streamlit-drawable-canvas-fix
 fastapi
 uvicorn
 sqlalchemy
