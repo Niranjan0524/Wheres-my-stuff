@@ -13,7 +13,7 @@ This repository contains the prototype implementation for **CSE411 Computer Visi
 ## Architecture Overview
 
 1. **Detection & Tracking**: YOLOv8 Nano (`yolov8n.pt`) paired with ByteTrack (`bytetrack.yaml`) for fast, CPU-friendly multi-object detection and tracking.
-2. **Visual Re-Identification (`reid.py`)**: `GlobalTracker` using 48-bin normalized HSV color histograms and aspect ratio matching to preserve identity across occlusions and track re-entries.
+2. **Visual Re-Identification (`reid.py`)**: `GlobalTracker` matches a new ByteTrack ID to a recently lost track of the same class using a CLIP ViT-B/32 embedding (cosine distance). If the CLIP weights cannot be loaded, it falls back to a 48-bin HSV histogram.
 3. **Dynamic Zone Classification (`zones.py`)**: `ZoneManager` utilizing OpenCV's Point-in-Polygon algorithm (`cv2.pointPolygonTest`) to evaluate arbitrary polygonal spatial zones persisted in JSON.
 4. **Natural Language Query Engine (`query_engine.py`)**: Parses natural questions (*"Where is my laptop?"*, *"Where did I leave my bottle?"*), resolves object classes via aliases and fuzzy matching, and retrieves latest locations with movement history.
 5. **Persistent Observation Storage (`db.py`)**: SQLite database (`observations.db`) logging timestamps, frame numbers, classes, ByteTrack IDs, global track IDs, confidence, zones, crop paths, and keyframe paths.
@@ -28,6 +28,7 @@ This repository contains the prototype implementation for **CSE411 Computer Visi
 ```powershell
 pip install -r requirements.txt
 ```
+The first video run downloads CLIP ViT-B/32 weights (OpenAI). If that download fails, tracking still runs and identity stitching uses the HSV histogram.
 
 ### 2. Configure Environment Variable (Optional for AI Scene Analysis)
 To enable Google Gemini 2.5 Flash scene analysis:

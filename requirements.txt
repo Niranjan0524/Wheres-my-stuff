@@ -10,3 +10,4 @@ google-genai
 requests
 Pillow
 pandas
+open-clip-torch

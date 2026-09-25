@@ -3,7 +3,7 @@ pipeline.py — Core Detection + Tracking + Classification Pipeline
 
 Task 5 upgrades:
   • Polygonal zone classification via ZoneManager (replaces static quadrants)
-  • Visual ReID / global track stitching via GlobalTracker
+  • Visual ReID / global track stitching via GlobalTracker (CLIP, HSV fallback)
   • Object crop extraction (for UI thumbnails and ReID gallery)
   • Zone overlay drawing on annotated output video
   • Extended DB logging (global_track_id, crop_path, frame_path)
