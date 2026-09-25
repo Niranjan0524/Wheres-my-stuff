@@ -1,4 +1,4 @@
-# Where Is My Stuff? — Task 5 (50% Milestone)
+# Where Is My Stuff? — 75% Milestone
 
 A Computer Vision-based tracking and observation system designed to answer: *"Where did I last leave this object?"*
 
@@ -50,6 +50,14 @@ streamlit run app.py
 ```
 The dashboard will open in your browser at `http://localhost:8501`.
 
+### 5. Run the evaluation
+After a video has been processed, or by passing a video path so the script processes it first:
+```powershell
+python evaluate.py
+python evaluate.py path\to\room.mp4
+```
+This writes `evaluation_results.md` with detection counts, zone dwell, stitched track IDs, and the Task 5 sample questions. See [`milestone_75.md`](milestone_75.md).
+
 ---
 
 ## Dashboard Features
@@ -77,3 +85,4 @@ The dashboard will open in your browser at `http://localhost:8501`.
 ## Reports
 - **Task 4 Report (25% Milestone):** [`project_report.md`](project_report.md)
 - **Task 5 Report (50% Milestone):** [`report5.md`](report5.md)
+- **75% Milestone:** [`milestone_75.md`](milestone_75.md)

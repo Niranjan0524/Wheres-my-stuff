@@ -168,6 +168,7 @@ class GlobalTracker:
             else "hsv"
         )
         self._next_global_id: int = 1
+        self.stitch_count: int = 0
         # byte_track_id  →  global_track_id   (for currently active tracks)
         self._active_map: dict[int, int] = {}
         # global_track_id  →  TrackDescriptor (gallery of all known tracks)
@@ -210,6 +211,7 @@ class GlobalTracker:
 
         if matched_gid is not None:
             gid = matched_gid
+            self.stitch_count += 1
         else:
             gid = self._next_global_id
             self._next_global_id += 1
@@ -398,6 +400,7 @@ if __name__ == "__main__":
     hsv.end_of_frame({2}, 2)  # red bottle lost
     stitched = hsv.update(red, 9, "bottle", (110, 110, 190, 270), 3)
     assert stitched == gid_red, stitched
+    assert hsv.stitch_count == 1, hsv.stitch_count
     print(f"HSV stitch ok: lost id came back as gid {stitched}")
 
     clip = GlobalTracker(embedder=_ColorEmbedder())

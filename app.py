@@ -58,7 +58,7 @@ def _preview_bgr(frame_bgr, zones: list[dict]):
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Where Is My Stuff?", layout="wide")
 st.title("🔎 Where Is My Stuff?")
-st.caption("Computer Vision Object Tracking & Observation System — Task 5 (50% Milestone)")
+st.caption("Computer Vision Object Tracking & Observation System — 75% Milestone")
 
 os.makedirs("uploads", exist_ok=True)
 os.makedirs("frames", exist_ok=True)

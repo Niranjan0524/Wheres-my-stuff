@@ -201,6 +201,13 @@ def process_video(video_path, output_video_path="output.mp4",
     cap.release()
     out.release()
     memory.save()
+    os.makedirs(memory.directory, exist_ok=True)
+    with open(os.path.join(memory.directory, "run_stats.json"), "w",
+              encoding="utf-8") as f:
+        json.dump({
+            "backend": global_tracker.backend,
+            "stitches": global_tracker.stitch_count,
+        }, f, indent=2)
     return output_video_path
 
 
