@@ -51,7 +51,7 @@ streamlit run app.py
 The dashboard will open in your browser at `http://localhost:8501`.
 
 ### 5. Live camera or RTSP
-The same detection, tracking, zones, and identity steps can read a webcam or a network camera. Press `q` in the preview window to stop. The annotated recording is `output_live.mp4`. A live run keeps recent sightings and drops anything older than 30 minutes. Uploading a video file still starts a fresh log.
+The dashboard’s **Live camera** section can start and stop a webcam or RTSP stream and shows the latest zone for each object. From a terminal, press `q` in the preview window to stop. The annotated recording is `output_live.mp4`. A live run keeps recent sightings and drops anything older than 30 minutes. Uploading a video file still starts a fresh log.
 
 ```powershell
 py -3.13 pipeline.py 0
