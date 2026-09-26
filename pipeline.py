@@ -15,7 +15,14 @@ from ultralytics import YOLO
 import datetime
 import os
 import json
-from db import init_db, reset_db, insert_observation
+from db import (
+    init_db,
+    reset_db,
+    insert_observation,
+    max_frame_number,
+    prune_older_than,
+    window_cutoff,
+)
 from zones import ZoneManager
 from reid import GlobalTracker
 from memory import ObservationMemory
@@ -76,14 +83,20 @@ def process_video(video_path, output_video_path="output.mp4",
     )
 
 
+LIVE_WINDOW_SECONDS = 30 * 60
+
+
 def process_stream(source, output_video_path="output_live.mp4",
                    frames_dir="frames", crops_dir="crops",
                    zones_config=None, progress_callback=None,
-                   frame_callback=None, max_frames=None):
+                   frame_callback=None, max_frames=None,
+                   window_seconds=LIVE_WINDOW_SECONDS):
     """
     Run the same detection, tracking, zone, and identity pipeline on a
     live source: a webcam index (``0``) or an RTSP/HTTP camera URL.
 
+    Sightings are appended to the existing log. Rows older than
+    ``window_seconds`` (30 minutes by default) are dropped.
     ``frame_callback(annotated_frame, frame_number)`` may return True to stop.
     ``max_frames`` stops after that many frames.
     """
@@ -96,17 +109,26 @@ def process_stream(source, output_video_path="output_live.mp4",
         progress_callback=progress_callback,
         frame_callback=frame_callback,
         max_frames=max_frames,
+        reset=False,
+        window_seconds=window_seconds,
     )
 
 
 def _run_pipeline(source, output_video_path="output.mp4",
                   frames_dir="frames", crops_dir="crops",
                   zones_config=None, progress_callback=None,
-                  frame_callback=None, max_frames=None):
-    # Reset DB and the visual-memory index for a fresh run
-    reset_db()
+                  frame_callback=None, max_frames=None,
+                  reset=True, window_seconds=None):
+    # A file run replaces the log. A live run keeps it and prunes by age.
     memory = ObservationMemory()
-    memory.reset()
+    if reset:
+        reset_db()
+        memory.reset()
+    else:
+        init_db()
+        memory.load()
+        if window_seconds:
+            _prune_window(memory, window_seconds)
 
     # Initialise YOLO model (nano for CPU speed)
     model = YOLO("yolov8n.pt")
@@ -144,10 +166,12 @@ def _run_pipeline(source, output_video_path="output.mp4",
     out = cv2.VideoWriter(output_video_path, fourcc, fps,
                           (img_width, img_height))
 
-    frame_number = 0
+    frame_number = 0 if reset else max_frame_number()
+    processed = 0
 
     while frame is not None:
         frame_number += 1
+        processed += 1
         timestamp = str(datetime.datetime.now())
 
         # ── Detection + Tracking ─────────────────────────────────────────
@@ -255,9 +279,12 @@ def _run_pipeline(source, output_video_path="output.mp4",
         if progress_callback:
             progress_callback(frame_number, total_frames)
 
+        if window_seconds and frame_number % 30 == 0:
+            _prune_window(memory, window_seconds)
+
         if frame_callback is not None and frame_callback(annotated_frame, frame_number):
             break
-        if max_frames is not None and frame_number >= max_frames:
+        if max_frames is not None and processed >= max_frames:
             break
 
         ok, frame = cap.read()
@@ -266,6 +293,8 @@ def _run_pipeline(source, output_video_path="output.mp4",
 
     cap.release()
     out.release()
+    if window_seconds:
+        _prune_window(memory, window_seconds)
     memory.save()
     os.makedirs(memory.directory, exist_ok=True)
     with open(os.path.join(memory.directory, "run_stats.json"), "w",
@@ -275,6 +304,12 @@ def _run_pipeline(source, output_video_path="output.mp4",
             "stitches": global_tracker.stitch_count,
         }, f, indent=2)
     return output_video_path
+
+
+def _prune_window(memory: ObservationMemory, window_seconds: float):
+    """Drop database rows and visual-memory crops older than the window."""
+    prune_older_than(window_seconds)
+    memory.drop_older_than(window_cutoff(window_seconds))
 
 
 def _id_color(track_id: int) -> tuple:
